@@ -1,0 +1,14 @@
+# © 2025 Pallab Basu Roy. All rights reserved.
+# This source code is proprietary and confidential.
+# Unauthorized copying, modification, or commercial use is strictly prohibited.
+# Repository: https://github.com/pallab06/stock-options-intelligence
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'stock-options-intelligence'
+    static_configs:
+      - targets: ['app:8000']
+    metrics_path: '/metrics'
