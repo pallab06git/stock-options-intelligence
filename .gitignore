@@ -49,6 +49,7 @@ venv.bak/
 
 # Logs
 logs/
+/logs/
 *.log
 *.log.*
 
@@ -143,3 +144,8 @@ secrets.json
 # Profiling
 *.prof
 *.lprof
+
+# State files
+/state/*
+!state/.gitkeep
+*.json.bak
