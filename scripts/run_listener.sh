@@ -11,14 +11,16 @@ set -e
 
 echo "Starting Polygon.io SPY Listener..."
 
-# Check if virtual environment exists
+# Check if virtual environment exists, create if not
 if [ ! -d "venv" ]; then
-    echo "Error: Virtual environment not found. Run setup.sh first."
-    exit 1
+    echo "Virtual environment not found. Creating..."
+    python3 -m venv venv
+    source venv/bin/activate
+    echo "Installing dependencies..."
+    pip install -r requirements.txt
+else
+    source venv/bin/activate
 fi
-
-# Activate virtual environment
-source venv/bin/activate
 
 # Check if .env exists
 if [ ! -f ".env" ]; then
