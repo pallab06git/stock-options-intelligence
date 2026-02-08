@@ -40,3 +40,28 @@ Established repo-native tracking as the system of record.
 ### Next Step
 - Create DECISIONS.md and freeze architectural choices
 
+---
+
+## 2026-02-07 (continued)
+
+### Work Done
+- Implemented SPY stock price ingestion module (TEST mode)
+- Added REST-based Polygon aggregate fetch
+- Added logging, error handling, and date-partitioned storage
+
+### Time Spent
+- ~35 minutes
+
+### Tools Used
+- Claude Code v2.1.19 (Sonnet 4.5)
+- Polygon.io REST API
+- Python 3.11
+
+### Files Touched
+- src/data_ingestion/stock_prices.py
+- docs/PROJECT_TRACKER.md
+- docs/EXECUTION_LOG.md
+
+### Notes
+- Using daily aggregates as bootstrap
+- Output path aligned to data/stocks/YYYY-MM-DD/
