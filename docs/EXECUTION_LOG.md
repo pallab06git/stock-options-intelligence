@@ -65,3 +65,24 @@ Established repo-native tracking as the system of record.
 ### Notes
 - Using daily aggregates as bootstrap
 - Output path aligned to data/stocks/YYYY-MM-DD/
+
+
+---
+
+## 2026-02-07 — Validation
+
+### Work Done
+- Executed SPY stock ingestion module locally
+- Successfully fetched 5 days of aggregate data
+- Verified logging and CSV output
+
+### Results
+- Data written to: data/stocks/2026-02-08/
+- 5 daily bars ingested
+- No API or runtime errors
+
+### Notes
+- UTC-based directory naming confirmed
+- Polygon daily aggregates timestamped at market close (UTC)
+
+

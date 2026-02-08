@@ -39,7 +39,7 @@ Implement REST-based SPY stock aggregate ingestion using Polygon.io in TEST mode
 
 | Task ID | Task | Tools | Status | Tests |
 |------|------|------|------|------|
-| 1.1.1 | Stock ingestion module | Python, requests, pandas, Polygon REST | 🟡 In Progress | Manual |
+| 1.1.1 | Stock ingestion module | Python, requests, pandas, Polygon REST | ✅ Complete | Manual |
 | 1.1.2 | File storage (CSV / JSONL) | pandas | ⬜ Not Started | Manual |
 | 1.1.3 | Logging & error handling | logging / loguru | ⬜ Not Started | Manual |
 | 1.1.4 | CLI runner | argparse | ⬜ Not Started | Manual |
