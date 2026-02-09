@@ -112,20 +112,33 @@ def fetch(days_back: int = 30) -> pd.DataFrame:
     return df
 
 
-def save(df: pd.DataFrame, output_dir: str = None) -> None:
+def save(df: pd.DataFrame, output_dir: str = None, overwrite: bool = False) -> None:
     """
-    Save DataFrame to CSV file with timestamp in filename.
+    Save DataFrame to CSV file with deterministic filename based on date range.
 
     Args:
         df: DataFrame with stock price data
         output_dir: Directory path to save CSV file (default: data/stocks/YYYY-MM-DD/)
+        overwrite: If True, overwrite existing file; if False, skip if exists (default: False)
 
     Returns:
         None
+
+    Raises:
+        ValueError: If DataFrame is missing required columns
     """
     if df.empty:
         logger.warning("DataFrame is empty, skipping save")
         return
+
+    # Schema enforcement
+    expected_columns = ["timestamp", "open", "high", "low", "close", "volume"]
+    missing_columns = set(expected_columns) - set(df.columns)
+    if missing_columns:
+        raise ValueError(f"DataFrame missing required columns: {missing_columns}")
+
+    # Enforce column order
+    df = df[expected_columns]
 
     # Use date-based directory structure if not specified
     if output_dir is None:
@@ -136,26 +149,56 @@ def save(df: pd.DataFrame, output_dir: str = None) -> None:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Generate filename with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"spy_daily_{timestamp}.csv"
+    # Generate deterministic filename from DataFrame timestamps
+    from_date = df["timestamp"].min().strftime("%Y-%m-%d")
+    to_date = df["timestamp"].max().strftime("%Y-%m-%d")
+    filename = f"spy_daily_{from_date}_{to_date}.csv"
     filepath = output_path / filename
+
+    # Idempotency check
+    if filepath.exists() and not overwrite:
+        logger.warning(f"File {filepath} already exists and overwrite=False, skipping write")
+        return False
 
     # Save to CSV
     df.to_csv(filepath, index=False)
     logger.info(f"Saved {len(df)} rows to {filepath}")
+    return True
 
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Fetch and save SPY daily stock price data")
-    parser.add_argument("--days-back", type=int, default=30, help="Number of days to look back (default: 30)")
-    parser.add_argument("--output-dir", type=str, default=None, help="Output directory for CSV file (default: data/stocks/YYYY-MM-DD/)")
+    parser = argparse.ArgumentParser(
+        description="Fetch and save SPY daily stock price data"
+    )
+    parser.add_argument(
+        "--days-back",
+        type=int,
+        default=30,
+        help="Number of days to look back (default: 30)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default=None,
+        help="Output directory for CSV file (default: data/stocks/YYYY-MM-DD/)",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing file if it exists",
+    )
 
     args = parser.parse_args()
 
     df = fetch(days_back=args.days_back)
-    save(df, output_dir=args.output_dir)
+    saved = save(df, output_dir=args.output_dir, overwrite=args.overwrite)
 
-    print(f"✓ Successfully fetched and saved {len(df)} rows of SPY data")
+    if saved:
+        print(f"✓ Successfully fetched and saved {len(df)} rows of SPY data")
+    else:
+        print(
+            f"✓ Successfully fetched {len(df)} rows of SPY data "
+            "(existing file, skipped write)"
+        )

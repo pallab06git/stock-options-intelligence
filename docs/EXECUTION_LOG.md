@@ -85,4 +85,39 @@ Established repo-native tracking as the system of record.
 - UTC-based directory naming confirmed
 - Polygon daily aggregates timestamped at market close (UTC)
 
+---
+
+## 2026-02-08 — CLI Validation Complete
+
+### Work Done
+- Executed stock ingestion via CLI runner
+- Confirmed permanent environment variable setup
+- Validated weekend handling and UTC partitioning
+
+### Results
+- CLI command executed successfully
+- 2 daily bars fetched (expected due to market calendar)
+- CSV written to date-partitioned directory
+
+### Command Used
+python -m src.data_ingestion.stock_prices --days-back 3
+
+### Notes
+- Environment configuration confirmed stable
+- Module now ready for scheduling and automation
+
+---
+
+## 2026-02-09 — CLI Message Correctness Fix
+
+### Work Done
+- Fixed CLI success message to reflect actual save vs skip outcome
+- save() now returns status consumed by CLI
+
+### Validation
+- Skip case prints “fetched, skipped write”
+- Overwrite case prints “fetched and saved”
+
+### Notes
+- Prevents false success signals during idempotent runs
 
