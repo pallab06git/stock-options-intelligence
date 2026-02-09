@@ -53,9 +53,11 @@ Implement REST-based SPY stock aggregate ingestion using Polygon.io in TEST mode
 - [ ] Works on non-trading day without crashing
 
 ---
-
 ### Milestone 1.2 — Options Data Pipeline (REST)
-🔒 Locked until Milestone 1.1 complete
+
+| Task ID | Task | Tools | Status | Tests |
+|------|------|------|------|------|
+1.2.1 | Options chain ingestion | Polygon REST | ✅ Complete | Manual
 
 ---
 

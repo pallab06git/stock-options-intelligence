@@ -141,6 +141,39 @@ python -m src.data_ingestion.stock_prices --days-back 3
 
 ---
 
+### 2026-02-09 — Task 1.2.1: Options Chain Ingestion (Polygon REST)
+
+**Scope**
+- Implemented options chain ingestion module with testable, deterministic behavior.
+
+**Changes**
+- Standardized public interface to `fetch()` and `save()` (aligned with stock_prices.py).
+- Added module-level logging configuration (INFO level).
+- Implemented API guards:
+  - Missing API key validation
+  - HTTP 429 rate-limit detection
+  - HTTP error handling
+  - Malformed JSON handling
+  - Empty-results handling
+- Normalized API response into fixed schema:
+  - contract_symbol
+  - underlying_symbol
+  - expiration_date
+  - strike_price
+  - option_type
+- Implemented deterministic, idempotent file naming:
+  - `{symbol}_options_{expiration|ALL}_{type|ALL}.csv`
+- Added CLI runner with overwrite/skip semantics.
+
+**Validation**
+- REPL import test:
+  ```bash
+  from src.data_ingestion.options_chain import fetch, save
+  df = fetch(symbol="SPY")
+
+
+
+
 ## 2026-02-09 — Rate-Limit & Empty-Data Guards (Task 1.1.5)
 
 ### Work Done
