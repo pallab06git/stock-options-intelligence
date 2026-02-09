@@ -42,6 +42,7 @@ def fetch(days_back: int = 30) -> pd.DataFrame:
 
     Raises:
         ValueError: If POLYGON_API_KEY environment variable is not set
+        RuntimeError: If API rate limit is hit (HTTP 429)
         requests.HTTPError: If API request fails
     """
     api_key = os.environ.get("POLYGON_API_KEY")
@@ -70,6 +71,12 @@ def fetch(days_back: int = 30) -> pd.DataFrame:
 
     try:
         response = requests.get(url, params=params, timeout=30)
+
+        # Rate-limit guard: detect HTTP 429
+        if response.status_code == 429:
+            logger.error("Rate limit hit: HTTP 429 from Polygon")
+            raise RuntimeError("Polygon API rate limit exceeded")
+
         response.raise_for_status()
     except requests.exceptions.HTTPError as e:
         logger.error(f"HTTP error: {e}")
@@ -84,9 +91,11 @@ def fetch(days_back: int = 30) -> pd.DataFrame:
         logger.error(f"Malformed JSON response: {e}")
         raise
 
-    # Handle empty or missing results
+    # Empty API response guard
     if "results" not in data or not data["results"]:
-        logger.warning("No results returned from API (likely non-trading days or invalid date range)")
+        logger.warning(
+            f"No stock data returned for SPY from {from_date} to {to_date}"
+        )
         return pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
 
     results = data["results"]
@@ -108,6 +117,11 @@ def fetch(days_back: int = 30) -> pd.DataFrame:
         logger.error(f"Malformed API response structure: {e}")
         raise ValueError(f"API response missing required fields: {e}")
 
+    # Empty DataFrame guard
+    if df.empty:
+        logger.warning("Constructed DataFrame is empty after normalization")
+        return df
+
     logger.info(f"Successfully fetched {len(df)} rows of SPY data")
 
     return df
@@ -128,8 +142,9 @@ def save(df: pd.DataFrame, output_dir: str = None, overwrite: bool = False) -> b
     Raises:
         ValueError: If DataFrame is missing required columns
     """
+    # Empty-write protection
     if df.empty:
-        logger.warning("DataFrame is empty, skipping save")
+        logger.warning("DataFrame is empty, skipping file write")
         return False
 
     # Schema enforcement

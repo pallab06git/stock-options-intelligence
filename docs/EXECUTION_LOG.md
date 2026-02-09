@@ -139,5 +139,26 @@ python -m src.data_ingestion.stock_prices --days-back 3
 ### Notes
 - Claude Code used as single writer to avoid divergence
 
+---
+
+## 2026-02-09 — Rate-Limit & Empty-Data Guards (Task 1.1.5)
+
+### Work Done
+- Added HTTP 429 rate-limit detection with fatal exception
+- Added empty API response guard returning empty DataFrame with schema
+- Added empty DataFrame guard after normalization
+- Added empty-write protection in save()
+- Standardized ERROR/WARNING log semantics
+
+### Validation
+- Rate limit: ERROR log + RuntimeError on HTTP 429
+- Empty API response: WARNING log + return empty DataFrame
+- Empty DataFrame: WARNING log + early return
+- Empty save: WARNING log + skip file write
+
+### Notes
+- No retry/backoff logic (TEST mode, deterministic behavior)
+- Task 1.1.5 complete, Milestone 1.1 complete
+
 
 
