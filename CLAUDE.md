@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+# Claude Execution Contract
+This file defines the operating rules, guardrails, and execution standards
+that Claude must follow when working on this repository.
+
+All future Claude sessions must read and comply with this file before
+making any changes.
+
 ## Project Overview
 
 **Stock Options Intelligence** is an AI-powered trading intelligence engine that analyzes real-time SPY (S&P 500 ETF) options data to generate actionable trading signals. The system combines machine learning models with Claude AI reasoning to predict short-term option price movements and provide traders with specific entry points, target prices, and stop-loss levels.
@@ -768,3 +775,57 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Anthropic for Claude API
 - Market data providers
 - Open-source ML community
+
+
+## Operating Mode
+- This project follows strict, step-by-step execution.
+- No step is considered complete without:
+  - Code
+  - Manual test
+  - Tracker update
+  - Execution log update
+- Never skip testing or logging.
+
+## Change Rules
+- Do not modify unrelated files.
+- Do not refactor unless explicitly asked.
+- Always explain *why* a change is needed before proposing it.
+- Prefer minimal diffs.
+
+
+## Data Ingestion Standards
+- Every ingestion module must expose:
+  - fetch(...) → DataFrame
+  - save(...) → bool (written or skipped)
+- Must support:
+  - Empty data guard
+  - Deterministic filenames
+  - Idempotent writes
+  - CLI execution
+- Logging must be INFO-level, structured, and meaningful.
+
+
+## Testing Protocol
+- For every ingestion module:
+  1. Write tests before adding complexity
+  2. Mock external APIs (no live calls in tests)
+  3. Explicitly test failure modes
+- Pagination, batching, retries come ONLY after tests pass.
+
+
+
+## Tracking & Logs
+- PROJECT_TRACKER.md is the single source of truth for status.
+- EXECUTION_LOG.md records:
+  - What was done
+  - How it was tested
+  - Command(s) used
+- Never mark a task complete without both.
+
+## Claude Interaction Rules
+- Ask clarifying questions if requirements are ambiguous.
+- Proceed one task at a time.
+- After completing a task:
+  - Stop
+  - Ask what to do next
+- Do not batch multiple roadmap steps unless instructed.
