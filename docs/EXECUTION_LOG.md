@@ -121,3 +121,23 @@ python -m src.data_ingestion.stock_prices --days-back 3
 ### Notes
 - Prevents false success signals during idempotent runs
 
+---
+
+## 2026-02-09 — Logging & Error Handling Hardened (Task 1.1.3)
+
+### Work Done
+- Standardized INFO / WARNING / ERROR semantics
+- Ensured fatal errors are logged exactly once before raising
+- Enforced save() return contract used by CLI
+- Eliminated misleading success messages
+
+### Validation
+- Verified save vs skip behavior
+- Verified fatal error logging + stack trace
+- Manual CLI validation
+
+### Notes
+- Claude Code used as single writer to avoid divergence
+
+
+

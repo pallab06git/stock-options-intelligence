@@ -71,48 +71,49 @@ def fetch(days_back: int = 30) -> pd.DataFrame:
     try:
         response = requests.get(url, params=params, timeout=30)
         response.raise_for_status()
-    except requests.exceptions.Timeout:
-        logger.error("Request timed out after 30 seconds")
-        raise
     except requests.exceptions.HTTPError as e:
-        if response.status_code == 429:
-            logger.error("Rate limit exceeded (HTTP 429)")
-        else:
-            logger.error(f"HTTP error occurred: {e}")
+        logger.error(f"HTTP error: {e}")
         raise
     except requests.exceptions.RequestException as e:
         logger.error(f"Request failed: {e}")
         raise
 
-    data = response.json()
+    try:
+        data = response.json()
+    except ValueError as e:
+        logger.error(f"Malformed JSON response: {e}")
+        raise
 
     # Handle empty or missing results
     if "results" not in data or not data["results"]:
-        logger.warning(f"No results returned from API (likely non-trading days or invalid date range)")
+        logger.warning("No results returned from API (likely non-trading days or invalid date range)")
         return pd.DataFrame(columns=["timestamp", "open", "high", "low", "close", "volume"])
 
     results = data["results"]
-    logger.info(f"Received {len(results)} daily bars")
 
     # Convert to DataFrame
-    records = []
-    for bar in results:
-        records.append({
-            "timestamp": datetime.fromtimestamp(bar["t"] / 1000),  # Convert ms to datetime
-            "open": bar["o"],
-            "high": bar["h"],
-            "low": bar["l"],
-            "close": bar["c"],
-            "volume": bar["v"]
-        })
+    try:
+        records = []
+        for bar in results:
+            records.append({
+                "timestamp": datetime.fromtimestamp(bar["t"] / 1000),  # Convert ms to datetime
+                "open": bar["o"],
+                "high": bar["h"],
+                "low": bar["l"],
+                "close": bar["c"],
+                "volume": bar["v"]
+            })
+        df = pd.DataFrame(records)
+    except (KeyError, TypeError) as e:
+        logger.error(f"Malformed API response structure: {e}")
+        raise ValueError(f"API response missing required fields: {e}")
 
-    df = pd.DataFrame(records)
-    logger.info(f"Successfully processed {len(df)} rows")
+    logger.info(f"Successfully fetched {len(df)} rows of SPY data")
 
     return df
 
 
-def save(df: pd.DataFrame, output_dir: str = None, overwrite: bool = False) -> None:
+def save(df: pd.DataFrame, output_dir: str = None, overwrite: bool = False) -> bool:
     """
     Save DataFrame to CSV file with deterministic filename based on date range.
 
@@ -122,19 +123,20 @@ def save(df: pd.DataFrame, output_dir: str = None, overwrite: bool = False) -> N
         overwrite: If True, overwrite existing file; if False, skip if exists (default: False)
 
     Returns:
-        None
+        bool: True if file was written, False if write was skipped
 
     Raises:
         ValueError: If DataFrame is missing required columns
     """
     if df.empty:
         logger.warning("DataFrame is empty, skipping save")
-        return
+        return False
 
     # Schema enforcement
     expected_columns = ["timestamp", "open", "high", "low", "close", "volume"]
     missing_columns = set(expected_columns) - set(df.columns)
     if missing_columns:
+        logger.error(f"DataFrame missing required columns: {missing_columns}")
         raise ValueError(f"DataFrame missing required columns: {missing_columns}")
 
     # Enforce column order
@@ -157,12 +159,12 @@ def save(df: pd.DataFrame, output_dir: str = None, overwrite: bool = False) -> N
 
     # Idempotency check
     if filepath.exists() and not overwrite:
-        logger.warning(f"File {filepath} already exists and overwrite=False, skipping write")
+        logger.warning(f"File already exists, skipped write: {filepath}")
         return False
 
     # Save to CSV
     df.to_csv(filepath, index=False)
-    logger.info(f"Saved {len(df)} rows to {filepath}")
+    logger.info(f"Saved {len(df)} rows to: {filepath}")
     return True
 
 
@@ -192,13 +194,17 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    df = fetch(days_back=args.days_back)
-    saved = save(df, output_dir=args.output_dir, overwrite=args.overwrite)
+    try:
+        df = fetch(days_back=args.days_back)
+        saved = save(df, output_dir=args.output_dir, overwrite=args.overwrite)
 
-    if saved:
-        print(f"✓ Successfully fetched and saved {len(df)} rows of SPY data")
-    else:
-        print(
-            f"✓ Successfully fetched {len(df)} rows of SPY data "
-            "(existing file, skipped write)"
-        )
+        if saved:
+            print(f"✓ Successfully fetched and saved {len(df)} rows of SPY data")
+        else:
+            print(
+                f"✓ Successfully fetched {len(df)} rows of SPY data "
+                "(existing file, skipped write)"
+            )
+    except Exception as e:
+        logger.error(f"Fatal error: {e}")
+        raise
