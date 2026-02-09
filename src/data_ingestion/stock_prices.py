@@ -144,3 +144,18 @@ def save(df: pd.DataFrame, output_dir: str = None) -> None:
     # Save to CSV
     df.to_csv(filepath, index=False)
     logger.info(f"Saved {len(df)} rows to {filepath}")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Fetch and save SPY daily stock price data")
+    parser.add_argument("--days-back", type=int, default=30, help="Number of days to look back (default: 30)")
+    parser.add_argument("--output-dir", type=str, default=None, help="Output directory for CSV file (default: data/stocks/YYYY-MM-DD/)")
+
+    args = parser.parse_args()
+
+    df = fetch(days_back=args.days_back)
+    save(df, output_dir=args.output_dir)
+
+    print(f"✓ Successfully fetched and saved {len(df)} rows of SPY data")
