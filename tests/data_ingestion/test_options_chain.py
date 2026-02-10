@@ -174,3 +174,24 @@ def test_save_empty_dataframe_is_noop():
 
 def test_save_missing_required_columns_raises_value_error():
     """save() must raise ValueError if DataFrame schema is invalid"""
+
+
+# -------------------------
+# Pagination & batching
+# -------------------------
+
+def test_fetch_paginates_across_multiple_pages():
+    """fetch() must aggregate results across all paginated responses"""
+
+
+def test_fetch_stops_when_no_next_page():
+    """fetch() must terminate pagination when API indicates no next page"""
+
+
+def test_fetch_preserves_order_across_pages():
+    """fetch() must preserve API order when combining paginated results"""
+
+
+def test_fetch_fails_if_any_page_fails():
+    """fetch() must fail if any paginated request fails"""
+
