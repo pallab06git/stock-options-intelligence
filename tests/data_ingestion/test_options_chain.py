@@ -1,0 +1,63 @@
+"""
+Contract tests for options_chain ingestion.
+
+These tests define the expected behavior of the options_chain.fetch()
+and options_chain.save() functions. They intentionally avoid implementation
+details and focus on correctness, stability, and failure semantics.
+"""
+
+
+def test_fetch_returns_dataframe():
+    """fetch() must always return a pandas DataFrame"""
+
+
+def test_fetch_returns_expected_schema():
+    """fetch() must return a DataFrame with the required schema columns"""
+
+
+def test_fetch_empty_response_returns_empty_dataframe():
+    """fetch() must return an empty DataFrame with correct schema when API returns no results"""
+
+
+def test_fetch_missing_api_key_raises_value_error():
+    """fetch() must raise ValueError if POLYGON_API_KEY is not set"""
+
+
+def test_fetch_rate_limit_raises_runtime_error():
+    """fetch() must raise RuntimeError on HTTP 429 responses"""
+
+
+def test_fetch_http_error_propagates():
+    """fetch() must raise requests.HTTPError on non-429 HTTP errors"""
+
+
+def test_fetch_malformed_json_raises_value_error():
+    """fetch() must raise ValueError when API returns malformed JSON"""
+
+
+def test_fetch_missing_required_fields_raises_value_error():
+    """fetch() must raise ValueError if required fields are missing in API response"""
+
+
+def test_fetch_is_deterministic_given_same_response():
+    """fetch() must return identical DataFrames given identical API responses"""
+
+
+def test_save_writes_file_when_not_exists():
+    """save() must write file and return True when file does not exist"""
+
+
+def test_save_skips_when_file_exists_and_overwrite_false():
+    """save() must skip write and return False when file exists and overwrite=False"""
+
+
+def test_save_overwrites_when_overwrite_true():
+    """save() must overwrite existing file when overwrite=True"""
+
+
+def test_save_empty_dataframe_is_noop():
+    """save() must not write file and return False for empty DataFrames"""
+
+
+def test_save_missing_required_columns_raises_value_error():
+    """save() must raise ValueError if DataFrame schema is invalid"""
