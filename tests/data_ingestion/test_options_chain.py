@@ -180,8 +180,63 @@ def test_save_missing_required_columns_raises_value_error():
 # Pagination & batching
 # -------------------------
 
-def test_fetch_paginates_across_multiple_pages():
+def test_fetch_paginates_across_multiple_pages(monkeypatch):
     """fetch() must aggregate results across all paginated responses"""
+
+    from src.data_ingestion import options_chain
+
+    monkeypatch.setenv("POLYGON_API_KEY", "test_key")
+
+    # Simulate two paginated responses
+    responses = [
+        {
+            "results": [
+                {
+                    "ticker": "SPY_OPT_1",
+                    "underlying_ticker": "SPY",
+                    "expiration_date": "2026-02-14",
+                    "strike_price": 500,
+                    "contract_type": "call",
+                }
+            ],
+            "next_url": "PAGE_2",
+        },
+        {
+            "results": [
+                {
+                    "ticker": "SPY_OPT_2",
+                    "underlying_ticker": "SPY",
+                    "expiration_date": "2026-02-14",
+                    "strike_price": 505,
+                    "contract_type": "call",
+                }
+            ]
+            # no next_url → last page
+        },
+    ]
+
+    call_count = {"n": 0}
+
+    class MockResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            idx = call_count["n"]
+            call_count["n"] += 1
+            return responses[idx]
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(options_chain.requests, "get", mock_get)
+
+    df = options_chain.fetch(symbol="SPY")
+
+    assert len(df) == 2
+    assert list(df["contract_symbol"]) == ["SPY_OPT_1", "SPY_OPT_2"]
 
 
 def test_fetch_stops_when_no_next_page():

@@ -77,30 +77,48 @@ def fetch(
         f"type={contract_type or 'ALL'}"
     )
 
-    try:
-        response = requests.get(url, params=params, timeout=30)
+    all_results = []
+    next_url = None
 
-        # Rate-limit guard: detect HTTP 429
-        if response.status_code == 429:
-            logger.error("Rate limit hit: HTTP 429 from Polygon")
-            raise RuntimeError("Polygon API rate limit exceeded")
+    # Pagination loop: aggregate results across all pages
+    while True:
+        try:
+            # First request uses params, subsequent requests use next_url
+            if next_url:
+                response = requests.get(next_url, timeout=30)
+            else:
+                response = requests.get(url, params=params, timeout=30)
 
-        response.raise_for_status()
-    except requests.exceptions.HTTPError as e:
-        logger.error(f"HTTP error: {e}")
-        raise
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Request failed: {e}")
-        raise
+            # Rate-limit guard: detect HTTP 429
+            if response.status_code == 429:
+                logger.error("Rate limit hit: HTTP 429 from Polygon")
+                raise RuntimeError("Polygon API rate limit exceeded")
 
-    try:
-        data = response.json()
-    except ValueError as e:
-        logger.error(f"Malformed JSON response: {e}")
-        raise
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error: {e}")
+            raise
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed: {e}")
+            raise
+
+        try:
+            data = response.json()
+        except ValueError as e:
+            logger.error(f"Malformed JSON response: {e}")
+            raise
+
+        # Collect results from this page
+        if "results" in data and data["results"]:
+            all_results.extend(data["results"])
+
+        # Check for next page
+        next_url = data.get("next_url")
+        if not next_url:
+            break
 
     # Empty API response guard
-    if "results" not in data or not data["results"]:
+    if not all_results:
         logger.warning(
             f"No options data returned for {symbol} "
             f"(expiration={expiration_date or 'ALL'}, "
@@ -114,7 +132,7 @@ def fetch(
             "option_type"
         ])
 
-    results = data["results"]
+    results = all_results
 
     # Convert to DataFrame
     try:
