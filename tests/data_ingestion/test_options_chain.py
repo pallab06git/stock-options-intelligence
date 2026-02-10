@@ -11,8 +11,43 @@ def test_fetch_returns_dataframe():
     """fetch() must always return a pandas DataFrame"""
 
 
-def test_fetch_returns_expected_schema():
+def test_fetch_returns_expected_schema(monkeypatch):
     """fetch() must return a DataFrame with the required schema columns"""
+
+    import pandas as pd
+    from src.data_ingestion import options_chain
+
+    # Mock environment variable
+    monkeypatch.setenv("POLYGON_API_KEY", "test_key")
+
+    # Mock requests.get to return empty results
+    class MockResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"results": []}
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(options_chain.requests, "get", mock_get)
+
+    df = options_chain.fetch(symbol="SPY")
+
+    assert isinstance(df, pd.DataFrame)
+
+    expected_columns = [
+        "contract_symbol",
+        "underlying_symbol",
+        "expiration_date",
+        "strike_price",
+        "option_type",
+    ]
+
+    assert list(df.columns) == expected_columns
 
 
 def test_fetch_empty_response_returns_empty_dataframe():
@@ -23,8 +58,29 @@ def test_fetch_missing_api_key_raises_value_error():
     """fetch() must raise ValueError if POLYGON_API_KEY is not set"""
 
 
-def test_fetch_rate_limit_raises_runtime_error():
+def test_fetch_rate_limit_raises_runtime_error(monkeypatch):
     """fetch() must raise RuntimeError on HTTP 429 responses"""
+
+    from src.data_ingestion import options_chain
+
+    monkeypatch.setenv("POLYGON_API_KEY", "test_key")
+
+    class MockResponse:
+        status_code = 429
+
+        def raise_for_status(self):
+            pass
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(options_chain.requests, "get", mock_get)
+
+    try:
+        options_chain.fetch(symbol="SPY")
+        assert False, "Expected RuntimeError on HTTP 429"
+    except RuntimeError:
+        pass
 
 
 def test_fetch_http_error_propagates():
