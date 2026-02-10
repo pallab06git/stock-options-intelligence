@@ -87,8 +87,32 @@ def test_fetch_http_error_propagates():
     """fetch() must raise requests.HTTPError on non-429 HTTP errors"""
 
 
-def test_fetch_malformed_json_raises_value_error():
+def test_fetch_malformed_json_raises_value_error(monkeypatch):
     """fetch() must raise ValueError when API returns malformed JSON"""
+
+    from src.data_ingestion import options_chain
+
+    monkeypatch.setenv("POLYGON_API_KEY", "test_key")
+
+    class MockResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            raise ValueError("Invalid JSON")
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(options_chain.requests, "get", mock_get)
+
+    try:
+        options_chain.fetch(symbol="SPY")
+        assert False, "Expected ValueError due to malformed JSON"
+    except ValueError:
+        pass
 
 
 def test_fetch_missing_required_fields_raises_value_error(monkeypatch):
