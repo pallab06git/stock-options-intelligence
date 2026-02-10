@@ -91,9 +91,42 @@ def test_fetch_malformed_json_raises_value_error():
     """fetch() must raise ValueError when API returns malformed JSON"""
 
 
-def test_fetch_missing_required_fields_raises_value_error():
+def test_fetch_missing_required_fields_raises_value_error(monkeypatch):
     """fetch() must raise ValueError if required fields are missing in API response"""
 
+    from src.data_ingestion import options_chain
+
+    monkeypatch.setenv("POLYGON_API_KEY", "test_key")
+
+    # Missing 'strike_price' and 'contract_type'
+    class MockResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {
+                "results": [
+                    {
+                        "ticker": "SPY260214C00500000",
+                        "underlying_ticker": "SPY",
+                        "expiration_date": "2026-02-14"
+                        # intentionally missing fields
+                    }
+                ]
+            }
+
+    def mock_get(*args, **kwargs):
+        return MockResponse()
+
+    monkeypatch.setattr(options_chain.requests, "get", mock_get)
+
+    try:
+        options_chain.fetch(symbol="SPY")
+        assert False, "Expected ValueError due to missing required fields"
+    except ValueError:
+        pass
 
 def test_fetch_is_deterministic_given_same_response():
     """fetch() must return identical DataFrames given identical API responses"""
